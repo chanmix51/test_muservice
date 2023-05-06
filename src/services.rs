@@ -1,15 +1,7 @@
-// The pitch:
-// Artufans want to galip
-// 1 - Create and register to a galiper
-// 2 - Validate and galip until happy
-// 3 - Cancel or flash the galiper
-// 4 - download a finished galiper_statistics
-//
-// artufan // open_galiper // galiper // finished_galiper
+use std::sync::Arc;
 
-use test_muservice::model::*;
-
-use test_muservice::StdResult;
+use super::model::*;
+use super::StdResult;
 
 pub trait OpenGaliperService {
     fn create_open_galiper(&self, name: &str, artufan: &Artufan) -> StdResult<OpenGaliper>;
@@ -35,9 +27,8 @@ pub trait DownloadService {
     fn download(&self, galiper_id: &str) -> StdResult<GaliperStatistics>;
 }
 
-fn main() {
-    println!("Hello, world!");
+pub struct ServiceContainer {
+    pub open_galiper_service: Arc<dyn OpenGaliperService>,
+    pub galiper_service: Arc<dyn GaliperService>,
+    pub download_service: Arc<dyn DownloadService>,
 }
-
-#[cfg(test)]
-mod tests {}
