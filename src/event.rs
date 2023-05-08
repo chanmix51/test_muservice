@@ -36,14 +36,16 @@ impl SubjectPattern {
         }
     }
 
-    pub fn matches(&self, subject: &str) -> bool {
+    pub fn matches(&self, _subject: &str) -> bool {
         true
     }
 }
 
+type SenderPatternTuple = (SubjectPattern, Sender<EventMessage>);
+
 struct Synapps {
     receiver: Receiver<EventMessage>,
-    senders: HashMap<SubjectPattern, Sender<EventMessage>>,
+    senders: HashMap<String, SenderPatternTuple>,
 }
 
 impl Synapps {
@@ -54,10 +56,10 @@ impl Synapps {
         }
     }
 
-    pub fn register(&mut self, pattern: &str) -> Receiver<EventMessage> {
+    pub fn register(&mut self, name: &str, pattern: &str) -> Receiver<EventMessage> {
         let pattern = SubjectPattern::new(pattern);
         let (send, recv) = channel::<EventMessage>(CHANNEL_BUFFER_SIZE);
-        self.senders.insert(pattern, send);
+        self.senders.insert(name.to_string(), (pattern, send));
 
         recv
     }
@@ -69,7 +71,11 @@ impl Synapps {
                 None => return Ok(()),
             };
 
-            for (pattern, sender) in &self.senders {
+            for (_name, (pattern, sender)) in self
+                .senders
+                .iter()
+                .filter(|(name, _)| name != &&message.creator)
+            {
                 if pattern.matches(&message.subject) {
                     sender.send(message.clone()).await?;
                 }
